@@ -11,13 +11,11 @@ def count_active_neighbors(space: numpy.array, z: int, y: int, x: int) -> int:
                 if nz == z and ny == y and nx == x:
                     continue
                 try:
-                    if space[nz, ny, nx] ==  1:
+                    if space[nz, ny, nx] == 1:
                         active += 1
                 except IndexError:
                     pass
     return active
-
-
 
 
 class Space:
