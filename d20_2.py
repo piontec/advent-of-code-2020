@@ -1,5 +1,4 @@
 import math
-import re
 from typing import List, NewType, Dict, Optional
 
 import numpy as np
@@ -124,25 +123,37 @@ class Board:
         self.image = image
 
     def find_monsters(self) -> int:
-        all_ones = np.sum(self.image)
-        monst_1 = re.compile("..................1.")
-        monst_2 = re.compile("1....11....11....111")
-        monst_3 = re.compile(".1..1..1..1..1..1...")
+        img_size, _ = self.image.shape
+        # monst_1 = re.compile("..................1.")
+        # monst_2 = re.compile("1....11....11....111")
+        # monst_3 = re.compile(".1..1..1..1..1..1...")
+        monst_1 = [18]
+        monst_2 = [0, 5, 6, 11, 12, 17, 18, 19]
+        monst_3 = [1, 4, 7, 10, 13, 16]
+
         options = Tile.get_all_options(self.image)
         monsters = 0
         for option in options:
             monsters = 0
-            tmp_image = option.tolist()
-            image = ["".join([str(x) for x in row]) for row in tmp_image]
-            for image_row in range(1, len(image)):
-                for match in monst_2.finditer(image[image_row]):
-                    match_above = monst_1.match(image[image_row - 1][match.start():match.end() + 1])
-                    match_below = monst_3.match(image[image_row + 1][match.start():match.end() + 1])
-                    if match_above and match_below:
+            monster_locs = np.zeros((img_size, img_size))
+            for y in range(1, img_size - 1):
+                for x in range(img_size - 19):
+                    if all(option[y][x + offset] == 1 for offset in monst_2) and all(
+                            option[y - 1][x + offset] == 1 for offset in monst_1) and all(
+                            option[y + 1][x + offset] == 1 for offset in monst_3):
                         monsters += 1
+                        for o in monst_1:
+                            monster_locs[y - 1][x + o] = 1
+                        for o in monst_2:
+                            monster_locs[y][x + o] = 1
+                        for o in monst_3:
+                            monster_locs[y + 1][x + o] = 1
+
             if monsters > 0:
                 break
-        roughness = all_ones - (monsters * 15)
+        all_ones = np.sum(self.image)
+        monsters_ones = np.sum(monster_locs)
+        roughness = all_ones - monsters_ones
         return roughness
 
 
@@ -285,7 +296,6 @@ Tile 3079:
 res1 = solve(test1.splitlines())
 assert res1 == 273
 
-# 2671 - too high
 with open("i20.txt", "r") as f:
     lines = f.readlines()
 res = solve(lines)
